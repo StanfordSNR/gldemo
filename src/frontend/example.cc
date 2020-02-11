@@ -157,6 +157,8 @@ void do_calibration()
 
 int gc_window_trial()
 {
+  ofstream log;
+  log.open( "results.csv" );
   unsigned int frame_count = 0;
   int button; /* the button pressed (0 if timeout)  */
 
@@ -175,13 +177,14 @@ int gc_window_trial()
   float x_sample, y_sample;
 
   // Ensure Eyelink has enough time to switch modes
-  set_offline_mode();
+  set_offline_mode(); 
   pump_delay( 50 );
 
   // Start data streaming
   // Note that we are ignoring the EDF file.
   int error = start_recording( 0, 0, 1, 1 );
   if ( error != 0 ) {
+    log.close();
     return error;
   }
 
@@ -189,6 +192,7 @@ int gc_window_trial()
   if ( !eyelink_wait_for_block_start( 100, 1, 0 ) ) {
     end_trial();
     cerr << "ERROR: No link samples received!\n";
+    log.close();
     return TRIAL_ERROR;
   }
 
@@ -203,18 +207,22 @@ int gc_window_trial()
   // Poll for new samples until the diff between samples is large enough to signify LEDs switched
   while ( true ) {
     // Termination conditions
-    if ( ( error = check_recording() ) != 0 )
+    if ( ( error = check_recording() ) != 0 ) {
+      log.close();
       return error;
+    }
 
     if ( break_pressed() ) /* check for program termination or ALT-F4 or CTRL-C keys */
     {
       end_trial();       /* local function to stop recording */
+      log.close();
       return ABORT_EXPT; /* return this code to terminate experiment */
     }
 
     if ( escape_pressed() ) /* check for local ESC key to abort trial (useful in debugging)    */
     {
       end_trial();       /* local function to stop recording */
+      log.close();
       return SKIP_TRIAL; /* return this code if trial terminated */
     }
 
@@ -234,6 +242,9 @@ int gc_window_trial()
 
       x_sample = evt.fs.gx[eye_used];
       y_sample = evt.fs.gy[eye_used];
+
+      const auto t_sample = duration_cast<microseconds>( steady_clock::now() - start_time ).count();
+      log << t_sample << ", " << x_sample << ", " << y_sample << endl;
 
       // make sure pupil is present
       if ( x_sample != MISSING_DATA && y_sample != MISSING_DATA && evt.fs.pa[eye_used] > 0 ) {
@@ -272,6 +283,7 @@ int gc_window_trial()
     }
   }
   end_trial();
+  log.close();
   return check_record_exit();
 }
 
