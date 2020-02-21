@@ -12,7 +12,7 @@ void program_body()
 {
   VideoDisplay display { 1920, 1080, true }; // fullscreen window @ 1920x1080 luma resolution
   display.window().hide_cursor( true );
-  display.window().set_swap_interval( 1 ); // wait for vertical retrace before swapping buffer
+  display.window().set_swap_interval( 0 ); // wait for vertical retrace before swapping buffer
 
   /* all white (235 = max luma in typical Y'CbCr colorspace) */
   Raster420 white { 1920, 1080 };
