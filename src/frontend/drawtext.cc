@@ -20,7 +20,7 @@ void program_body()
   Pango pango { cairo };
 
   /* open the PNG */
-  PNGSurface png_image { "/home/keithw/stipple-fullsize.png" };
+  PNGSurface png_image { "/home/brookek/repos/gldemo/src/files/tree.png" };
 
   /* draw gray over everything */
   cairo_new_path( cairo );
