@@ -20,7 +20,7 @@ void program_body()
   Pango pango { cairo };
 
   /* open the PNG */
-  PNGSurface png_image { "/home/brookek/repos/gldemo/src/files/tree.png" };
+  PNGSurface png_image { "/home/brooke/repos/eyelink-latency/src/files/testim.png" };
 
   /* draw gray over everything */
   cairo_new_path( cairo );
@@ -31,7 +31,7 @@ void program_body()
 
   /* draw the PNG */
   cairo_identity_matrix( cairo );
-  cairo_scale( cairo, 0.1, 0.1 );
+  cairo_scale( cairo, 0.8, 0.8 );
   double center_x = 960, center_y = 540;
   cairo_device_to_user( cairo, &center_x, &center_y );
   cairo_translate( cairo, center_x, center_y );

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
+#include <vector>
 
 #include <msgpack.hpp>
 #include <zmq.hpp>
@@ -16,7 +18,7 @@ int main()
     fprintf(stderr, "Connecting to socket.\n");
     sock.connect("tcp://127.0.0.1:4587");
     fprintf(stderr, "Connected.\n");
-    // sock.send(zmq::str_buffer("R"), zmq::send_flags::dontwait);
+    //sock.send(zmq::str_buffer("R"), zmq::send_flags::dontwait);
     // fprintf(stderr, "Sent.\n");
 
     fprintf(stderr, "Send SUB_PORT.\n");
@@ -48,8 +50,14 @@ int main()
 
         msgpack::object_handle oh = msgpack::unpack((const char*) recv_msgs[1].data(), recv_msgs[1].size());
         msgpack::object obj = oh.get();
-        cout << obj << endl;
-
+        //cout << obj << endl;
+        string eye = obj.via.array.ptr[1].as<std::string>();
+        cout << "eye: " << eye[8] << endl;
+        float timestamp = obj.via.array.ptr[7].as<float>();   
+        cout << "timestamp: " << timestamp << endl;
+        float pos1 = obj.via.array.ptr[3].via.array.ptr[0].as<float>();
+        float pos2 = obj.via.array.ptr[3].via.array.ptr[1].as<float>();
+        cout << "pos: " << "[" << pos1 << ", " << pos2 << "]" << endl;
     }
 
     return 0;
