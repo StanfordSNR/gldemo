@@ -42,7 +42,7 @@ void program_body()
   Pango::Font myfont { "Times New Roman, 80" };
   Pango::Text mystring { cairo, pango, myfont, "Hello, world, Brooke, and Luke." };
   mystring.draw_centered_at( cairo, 960, 540 );
-  cairo_set_source_rgba( cairo, 1, 1, 1, 1 );
+  cairo_set_source_rgba( cairo, 1, 0, 0, 1 );
   cairo_fill( cairo );
 
   /* finish and copy to YUV raster */
@@ -52,7 +52,23 @@ void program_body()
   Raster420 yuv_raster { 1920, 1080 };
   for ( unsigned int y = 0; y < 1080; y++ ) {
     for ( unsigned int x = 0; x < 1920; x++ ) {
-      yuv_raster.Y.at( x, y ) = cairo.pixels()[y * stride + 1 + ( x * 4 )];
+      const float red = cairo.pixels()[y * stride + 2 + ( x * 4 )] / 255.0;
+      const float green = cairo.pixels()[y * stride + 1 + ( x * 4 )] / 255.0;
+      const float blue = cairo.pixels()[y * stride + 0 + ( x * 4 )] / 255.0;
+
+      const float Ey = 0.7154  * green + 0.0721 * blue + 0.2125 * red;
+      const float Epb = -0.386 * green + 0.5000 * blue - 0.115 * red;
+      const float Epr = -0.454 * green - 0.046  * blue + 0.500 * red;
+
+      const uint8_t Y = (219 * Ey) + 16;
+      const uint8_t Cb = (224 * Epb) + 128;
+      const uint8_t Cr = (224 * Epr) + 128;
+
+      yuv_raster.Y.at( x, y ) = Y;
+      if ( (x%2) == 0 and (y%2) == 0 ) {
+	yuv_raster.Cb.at( x / 2, y / 2 ) = Cb;
+	yuv_raster.Cr.at( x / 2, y / 2 ) = Cr;
+      }
     }
   }
 
