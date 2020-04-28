@@ -36,14 +36,14 @@ const string VideoDisplay::shader_source_scale_from_pixel_coordinates = R"( #ver
 
       in vec2 position;
       in vec2 chroma_texcoord;
-      out vec2 raw_position;
+      out vec2 Y_texcoord;
       out vec2 uv_texcoord;
 
       void main()
       {
         gl_Position = vec4( 2 * position.x / window_size.x - 1.0,
                             1.0 - 2 * position.y / window_size.y, 0.0, 1.0 );
-        raw_position = vec2( position.x, position.y );
+        Y_texcoord = vec2( position.x, position.y );
         uv_texcoord = vec2( chroma_texcoord.x, chroma_texcoord.y );
       }
     )";
@@ -70,15 +70,18 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
       uniform sampler2DRect uTex;
       uniform sampler2DRect vTex;
 
+      in vec2 Y_texcoord;
       in vec2 uv_texcoord;
-      in vec2 raw_position;
       out vec4 outColor;
 
       void main()
       {
-        float fY = texture(yTex, raw_position).x;
-        float fCb = texture(uTex, uv_texcoord).x;
-        float fCr = texture(vTex, uv_texcoord).x;
+        vec2 modified_Y_texcoord = vec2(1223*sin(Y_texcoord.x/1223), Y_texcoord.y);
+        vec2 modified_uv_texcoord = vec2(611*sin(uv_texcoord.x/611), uv_texcoord.y);
+
+        float fY = texture(yTex, modified_Y_texcoord).x;
+        float fCb = texture(uTex, modified_uv_texcoord).x;
+        float fCr = texture(vTex, modified_uv_texcoord).x;
 
         outColor = vec4(
           max(0, min(1.0, 1.16438356164384 * (fY - 0.06274509803921568627) + 1.59567019581339  * (fCr - 0.50196078431372549019))),
