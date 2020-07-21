@@ -56,24 +56,34 @@ void program_body()
       const float green = cairo.pixels()[y * stride + 1 + ( x * 4 )] / 255.0;
       const float blue = cairo.pixels()[y * stride + 0 + ( x * 4 )] / 255.0;
 
-      const float Ey = 0.7154  * green + 0.0721 * blue + 0.2125 * red;
+      const float Ey = 0.7154 * green + 0.0721 * blue + 0.2125 * red;
       const float Epb = -0.386 * green + 0.5000 * blue - 0.115 * red;
-      const float Epr = -0.454 * green - 0.046  * blue + 0.500 * red;
+      const float Epr = -0.454 * green - 0.046 * blue + 0.500 * red;
 
-      const uint8_t Y = (219 * Ey) + 16;
-      const uint8_t Cb = (224 * Epb) + 128;
-      const uint8_t Cr = (224 * Epr) + 128;
+      const uint8_t Y = ( 219 * Ey ) + 16;
+      const uint8_t Cb = ( 224 * Epb ) + 128;
+      const uint8_t Cr = ( 224 * Epr ) + 128;
 
       yuv_raster.Y.at( x, y ) = Y;
-      if ( (x%2) == 0 and (y%2) == 0 ) {
-	yuv_raster.Cb.at( x / 2, y / 2 ) = Cb;
-	yuv_raster.Cr.at( x / 2, y / 2 ) = Cr;
+      if ( ( x % 2 ) == 0 and ( y % 2 ) == 0 ) {
+        yuv_raster.Cb.at( x / 2, y / 2 ) = Cb;
+        yuv_raster.Cr.at( x / 2, y / 2 ) = Cr;
       }
     }
   }
 
   Texture420 texture { yuv_raster };
-  display.draw( texture );
+
+  float x = 0;
+  float y = 0;
+
+  while ( true ) {
+    display.draw( texture );
+    display.set_test_uniform( x, y );
+    x += 1.5;
+    y += 0.666;
+  }
+
   pause();
 }
 

@@ -66,6 +66,8 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
 
       precision mediump float;
 
+      uniform vec2 test_uniform;
+
       uniform sampler2DRect yTex;
       uniform sampler2DRect uTex;
       uniform sampler2DRect vTex;
@@ -76,7 +78,7 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
 
       void main()
       {
-        float fY = texture(yTex, raw_position).x;
+        float fY = texture(yTex, raw_position + test_uniform).x;
         float fCb = texture(uTex, uv_texcoord).x;
         float fCr = texture(vTex, uv_texcoord).x;
 
@@ -126,6 +128,12 @@ VideoDisplay::VideoDisplay( const unsigned int width, const unsigned int height,
   resize( window_size.first, window_size.second );
 
   glCheck( "VideoDisplay constructor" );
+}
+
+void VideoDisplay::set_test_uniform( const float x, const float y )
+{
+  texture_shader_program_.use();
+  glUniform2f( texture_shader_program_.uniform_location( "test_uniform" ), x, y );
 }
 
 void VideoDisplay::resize( const unsigned int width, const unsigned int height )
