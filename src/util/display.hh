@@ -68,6 +68,8 @@ public:
   void repaint();
   void resize( const unsigned int width, const unsigned int height );
 
+  //void updateHeadOrientation( const float pitch, const float roll, const float yaw);
+
   Window& window() { return current_context_window_.window_; }
   const Window& window() const { return current_context_window_.window_; }
 

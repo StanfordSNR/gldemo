@@ -36,14 +36,14 @@ const string VideoDisplay::shader_source_scale_from_pixel_coordinates = R"( #ver
 
       in vec2 position;
       in vec2 chroma_texcoord;
-      out vec2 raw_position;
+      out vec2 Y_texcoord;
       out vec2 uv_texcoord;
 
       void main()
       {
         gl_Position = vec4( 2 * position.x / window_size.x - 1.0,
                             1.0 - 2 * position.y / window_size.y, 0.0, 1.0 );
-        raw_position = vec2( position.x, position.y );
+        Y_texcoord = vec2( position.x, position.y );
         uv_texcoord = vec2( chroma_texcoord.x, chroma_texcoord.y );
       }
     )";
@@ -70,13 +70,54 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
       uniform sampler2DRect uTex;
       uniform sampler2DRect vTex;
 
+      in vec2 Y_texcoord;
       in vec2 uv_texcoord;
-      in vec2 raw_position;
       out vec4 outColor;
+
+      mat3 eul2rotm( float rotX, float rotY, float rotZ ) {
+        mat3 R_x = mat3(	1.0f,		0f,			0f,
+                0f, 	cos(rotX),	-sin(rotX),
+                0f, 	sin(rotX),	 cos(rotX));
+        mat3 R_y = mat3( cos(rotY),	0, sin(rotY),
+                0f, 	1.0f,	0f,                                               
+                -sin(rotY), 	0f,	 cos(rotY));
+        mat3 R_z = mat3( cos(rotZ),	-sin(rotZ), 0f,
+                sin(rotZ),	 cos(rotZ),	0f,
+                0f, 	0f,	 1.0f);
+
+        mat3 camMat = mat3(0.001488f, 0f, -1.4286f,
+                  0f, 0.001488f, -0.8036f,
+                  0f, 0f, 1f);
+                
+        return R_z * R_y * R_x * camMat;        
+      }
+
+      mat3 hardcodedR () {
+        mat3 R = mat3(	0.001488f,		0f,			-1.42857f,
+                0f, 	0.001305f,	-1.1846f,
+                0f, 	0.00713f,	 0.49232f);
+        return R;
+      }
+
+      
+
+      vec2 reproject_Y( vec2 Y_texcoord ) {
+        vec3 xyz = vec3( Y_texcoord.x, Y_texcoord.y, 1.0f );
+        vec3 xyz_norm = normalize(xyz);
+        vec3 ray3d = eul2rotm(0.5f, 0.0f, 0.0f) * xyz_norm;        
+
+        float theta = atan( ray3d.y / sqrt(ray3d.x * ray3d.x + ray3d.z * ray3d.z) );
+        float phi = atan( ray3d.x / ray3d.z );
+        vec2 xy_sphere = vec2( ((phi/3.14 * 3840) + 3840) / 2 , (theta + (3.14/2)) * 2048 / 3.14);
+
+        return xy_sphere;
+      }
 
       void main()
       {
-        float fY = texture(yTex, raw_position).x;
+        vec2 Y_reprojected = reproject_Y(Y_texcoord);
+
+        float fY = texture(yTex, Y_reprojected).x;
         float fCb = texture(uTex, uv_texcoord).x;
         float fCr = texture(vTex, uv_texcoord).x;
 
@@ -167,6 +208,12 @@ void VideoDisplay::resize( const unsigned int width, const unsigned int height )
   glCheck( "after installing shaders" );
 }
 
+// void VideoDisplay::updateHeadOrientation( const float pitch, const float roll, const float yaw) {
+//   texture_shader_program_.use();
+//   glUniform3f( texture_shader_program_.uniform_location( "head_orientation" ), pitch, roll, yaw );
+// }
+
+
 void VideoDisplay::draw( Texture420& image )
 {
   image.bind();
@@ -186,5 +233,4 @@ void VideoDisplay::repaint()
   glDrawArrays( GL_TRIANGLE_FAN, 0, 4 );
 
   current_context_window_.window_.swap_buffers();
-  glFinish();
 }
