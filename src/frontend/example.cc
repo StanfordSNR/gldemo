@@ -11,10 +11,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include <core_expt.h>
-#include <eyelink.h>
-#include <sdl_expt.h>
-
 #include "display.hh"
 
 #define CURSOR_SIZE 5 /* radius of the white dot in px */

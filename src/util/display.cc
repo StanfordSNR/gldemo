@@ -78,7 +78,7 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
         mat3 R_x = mat3(	1.0f,		0f,			0f,
                 0f, 	cos(rotX),	-sin(rotX),
                 0f, 	sin(rotX),	 cos(rotX));
-        mat3 R_y = mat3( cos(rotY),	0, sin(rotY),
+        mat3 R_y = mat3( cos(rotY),	0f, sin(rotY),
                 0f, 	1.0f,	0f,                                               
                 -sin(rotY), 	0f,	 cos(rotY));
         mat3 R_z = mat3( cos(rotZ),	-sin(rotZ), 0f,
@@ -89,7 +89,7 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
                   0f, 0.001488f, -0.8036f,
                   0f, 0f, 1f);
                 
-        return R_z * R_y * R_x * camMat;        
+        return R_z * R_y * R_x;
       }
 
       mat3 hardcodedR () {
@@ -104,11 +104,16 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
       vec2 reproject_Y( vec2 Y_texcoord ) {
         vec3 xyz = vec3( Y_texcoord.x, Y_texcoord.y, 1.0f );
         vec3 xyz_norm = normalize(xyz);
-        vec3 ray3d = eul2rotm(0.5f, 0.0f, 0.0f) * xyz_norm;        
 
-        float theta = atan( ray3d.y / sqrt(ray3d.x * ray3d.x + ray3d.z * ray3d.z) );
-        float phi = atan( ray3d.x / ray3d.z );
-        vec2 xy_sphere = vec2( ((phi/3.14 * 3840) + 3840) / 2 , (theta + (3.14/2)) * 2048 / 3.14);
+        vec3 ray3d = eul2rotm(0.0f, 0.0f, 0.0f) * xyz_norm;        
+
+        float theta = atan( ray3d.y, length(ray3d.xz) );
+
+        float phi = atan( ray3d.x, ray3d.z );
+
+        return vec2( phi, 0.0 );
+
+        vec2 xy_sphere = vec2( (phi / 3.14f) * 1920f + 1920.0, theta * 1080f );
 
         return xy_sphere;
       }
@@ -117,9 +122,10 @@ const string VideoDisplay::shader_source_ycbcr = R"( #version 130
       {
         vec2 Y_reprojected = reproject_Y(Y_texcoord);
 
-        float fY = texture(yTex, Y_reprojected).x;
-        float fCb = texture(uTex, uv_texcoord).x;
-        float fCr = texture(vTex, uv_texcoord).x;
+//        float fY = texture(yTex, Y_reprojected).x;
+        float fY = (3.14 + Y_reprojected.x / 6.28) + max( 0.0, min( 0.0, texture(yTex, Y_reprojected).x ) );
+        float fCb = 0.5 + max( 0.0, min( 0.0, texture(uTex, uv_texcoord).x ) );
+        float fCr = 0.5 + max( 0.0, min( 0.0, texture(vTex, uv_texcoord).x ) );
 
         outColor = vec4(
           max(0, min(1.0, 1.16438356164384 * (fY - 0.06274509803921568627) + 1.59567019581339  * (fCr - 0.50196078431372549019))),

@@ -9,10 +9,6 @@
 #include "cairo_objects.hh"
 #include "display.hh"
 
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-
 using namespace std;
 using namespace std::chrono;
 
@@ -24,7 +20,7 @@ void writePNGRaster(Raster420 & yuv_raster) {
   Cairo cairo { SCREEN_RES_X, SCREEN_RES_Y };
 
   /* open the PNG */
-  PNGSurface png_image { "/home/brooke/repos/eyelink-latency/src/files/frame92.png" };
+  PNGSurface png_image { "frame92.png" };
 
   /* draw the PNG */
   cairo_identity_matrix( cairo );
@@ -64,6 +60,7 @@ void writePNGRaster(Raster420 & yuv_raster) {
   }
 }
 
+#if 0
 cv::Mat eul2rotm(double rotx, double roty, double rotz)
 {
     cv::Mat R_x = (cv::Mat_<double>(3, 3) << 1, 0, 0,
@@ -170,6 +167,7 @@ void onlineMethod() {
   //  display.draw( texture );
   //}
 }
+#endif
 
 void withShader() {
 
