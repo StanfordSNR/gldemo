@@ -1,3 +1,4 @@
+
 #include <chrono>
 #include <cstring>
 #include <exception>
@@ -24,13 +25,13 @@ void writePNGRaster(Raster420 & yuv_raster) {
   Cairo cairo { SCREEN_RES_X, SCREEN_RES_Y };
 
   /* open the PNG */
-  PNGSurface png_image { "/home/brooke/repos/eyelink-latency/src/files/frame92.png" };
+  PNGSurface png_image { "/home/brooke/repos/eyelink-latency/src/files/frame92_resized.png" };
 
   /* draw the PNG */
   cairo_identity_matrix( cairo );
   //cairo_scale( cairo, 0.234375, 0.263671875 );
-  cairo_scale( cairo, 0.5, 0.52734375 );
-  //cairo_scale(cairo, 1.0, 1.0);
+  //cairo_scale( cairo, 0.5, 0.52734375 );
+  cairo_scale(cairo, 1.0, 1.0);
   double center_x = 0, center_y = 0;
   cairo_device_to_user( cairo, &center_x, &center_y );
   cairo_translate( cairo, center_x, center_y );
@@ -86,12 +87,15 @@ cv::Mat eul2rotm(double rotx, double roty, double rotz)
     return R;
 }
 
-cv::Mat xyz_norm_map;
+cv::Mat xyz_norm_map_x;
+cv::Mat xyz_norm_map_y;
 
 std::pair<double, double> reprojection(int x_img, int y_img, cv::Mat& img_src)
 {
     cv::Mat xyz = (cv::Mat_<double>(3, 1) << (double)x_img, (double)y_img, 1);
     cv::Mat xyz_norm = xyz / norm(xyz);    
+
+    //xyz_norm_map_x.at<cv::Vec3b>(x_img, y_img) = xyz_norm.at<double>(0,0);
 
     //std::cout << "[ " << xyz_norm.at<double>(0, 0) << ", " <<xyz_norm.at<double>(0, 1) << ", " <<xyz_norm.at<double>(0, 2) << " ]" << std::endl;
 
@@ -159,16 +163,16 @@ void rectPortionRaster(Raster420 & yuv_raster, cv::Mat& img_src) {
 
 void onlineMethod() {
   cv::Mat img_src = cv::imread("/home/brooke/repos/eyelink-latency/src/files/frame92.png", cv::IMREAD_COLOR);
-  //VideoDisplay display { SCREEN_RES_X, SCREEN_RES_Y, false }; // fullscreen window @ 1920x1080 luma resolution
+  VideoDisplay display { SCREEN_RES_X, SCREEN_RES_Y, false }; // fullscreen window @ 1920x1080 luma resolution
   Raster420 yuv_raster { SCREEN_RES_X  , SCREEN_RES_Y };
   rectPortionRaster(yuv_raster, img_src);
- // Texture420 texture { yuv_raster };
+  Texture420 texture { yuv_raster };
 
-  std::cout << img_src.cols << std::endl;
+  //std::cout << img_src.cols << std::endl;
 
-  //while (true) {
-  //  display.draw( texture );
-  //}
+  while (true) {
+    display.draw( texture );
+  }
 }
 
 void withShader() {
@@ -178,8 +182,16 @@ void withShader() {
   writePNGRaster(yuv_raster);
   Texture420 texture { yuv_raster };
 
+  float roll = 0;
+  float pitch = 0;
+  float yaw = 0;
+
   while (true) {
     display.draw( texture );
+    display.update_head_orientation( roll, pitch, yaw );
+    roll += 0.001;
+    pitch += 0.003;
+    yaw += 0.001;
   }
 
 }

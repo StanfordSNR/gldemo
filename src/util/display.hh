@@ -73,6 +73,8 @@ public:
   Window& window() { return current_context_window_.window_; }
   const Window& window() const { return current_context_window_.window_; }
 
+  void update_head_orientation( const float x, const float y, const float z );
+
   /* forbid copying */
   VideoDisplay( const VideoDisplay& other ) = delete;
   VideoDisplay& operator=( const VideoDisplay& other ) = delete;
